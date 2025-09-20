@@ -1,34 +1,37 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { NgxAuthClientModule, RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
-import { ExampleCrudController } from './example-crud.controller';
-import { ExampleCrudService } from './example-crud.service';
-import {
-  ExampleMongodbDoc,
-  ExampleMongodbDocSchema,
-} from './schemas/example-mongodb-doc.schema';
+import { MenuController } from './menu.controller';
+import { MenuService } from './menu.service';
+import { MenuItemDoc, MenuItemSchema } from './schemas/menu-item.schema';
 
 const SCHEMA_IMPORTS =
   process.env.GENERATE_OPENAPI === 'true'
     ? []
     : [
         MongooseModule.forFeature([
-          { name: ExampleMongodbDoc.name, schema: ExampleMongodbDocSchema },
+          { name: MenuItemDoc.name, schema: MenuItemSchema },
         ]),
       ];
+
 // When generating OpenAPI, stub out the Mongoose model and the guard
 const FAKE_PROVIDERS =
   process.env.GENERATE_OPENAPI === 'true'
     ? [
         {
-          provide: getModelToken(ExampleMongodbDoc.name),
+          provide: getModelToken(MenuItemDoc.name),
           // Minimal fake the service can accept; if service calls methods during generation (it shouldn't), add no-op fns
           useValue: {
             // common Mongoose methods we might accidentally touch
-            find: () => ({ exec: async () => [] }),
+            find: () => ({
+              exec: async () => [],
+              sort: () => ({ exec: async () => [] }),
+            }),
             findById: () => ({ exec: async () => null }),
             findByIdAndUpdate: () => ({ exec: async () => null }),
             findOne: () => ({ exec: async () => null }),
+            findByIdAndDelete: () => ({ exec: async () => null }),
+            bulkWrite: async () => ({}),
           },
         },
         {
@@ -38,9 +41,11 @@ const FAKE_PROVIDERS =
         },
       ]
     : [];
+
 @Module({
   imports: [NgxAuthClientModule, ...SCHEMA_IMPORTS],
-  controllers: [ExampleCrudController],
-  providers: [ExampleCrudService, ...FAKE_PROVIDERS],
+  controllers: [MenuController],
+  providers: [MenuService, ...FAKE_PROVIDERS],
+  exports: [MenuService],
 })
-export class ExampleMongodbDocModule {}
+export class MenuModule {}
