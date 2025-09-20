@@ -44,7 +44,7 @@ export class ReorderDto {
 }
 
 @ApiTags('Menu')
-@Controller('menu')
+@Controller('navigational-list')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
