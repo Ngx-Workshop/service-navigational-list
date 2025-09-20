@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -48,6 +49,8 @@ export class ReorderDto {
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
+  logger = new Logger(MenuController.name);
+
   @Get('auth-test')
   @UseGuards(RemoteAuthGuard)
   @ApiOkResponse({ type: AuthTestDto })
@@ -58,6 +61,7 @@ export class MenuController {
   @Post()
   @ApiCreatedResponse({ type: MenuItemDto })
   create(@Body() createMenuItemDto: CreateMenuItemDto) {
+    this.logger.log('Creating new MenuItem', createMenuItemDto);
     return this.menuService.create(createMenuItemDto);
   }
 
