@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Logger,
   Param,
   Patch,
   Post,
@@ -13,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
+import { ArrayNotEmpty, IsArray, IsMongoId } from 'class-validator';
 import {
   CreateMenuItemDto,
   MenuItemDto,
@@ -41,6 +42,9 @@ export class AuthTestDto {
 
 export class ReorderDto {
   @ApiProperty({ type: [String] })
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsMongoId({ each: true })
   itemIds: string[];
 }
 
@@ -48,8 +52,6 @@ export class ReorderDto {
 @Controller('navigational-list')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
-
-  logger = new Logger(MenuController.name);
 
   @Get('auth-test')
   @UseGuards(RemoteAuthGuard)
@@ -61,7 +63,6 @@ export class MenuController {
   @Post()
   @ApiCreatedResponse({ type: MenuItemDto })
   create(@Body() createMenuItemDto: CreateMenuItemDto) {
-    this.logger.log('Creating new MenuItem', createMenuItemDto);
     return this.menuService.create(createMenuItemDto);
   }
 
@@ -211,6 +212,7 @@ export class MenuController {
   @ApiParam({ name: 'domain', enum: DomainEnum })
   @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
   @ApiParam({ name: 'state', enum: StateEnum })
+  @ApiBody({ type: ReorderDto })
   @ApiOkResponse({ type: MenuItemDto, isArray: true })
   reorderMenuItems(
     @Param('domain') domain: DomainEnum,
