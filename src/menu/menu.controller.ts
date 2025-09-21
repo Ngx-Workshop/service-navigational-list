@@ -28,6 +28,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsMongoId,
+  IsNumber,
   IsOptional,
   ValidateNested,
 } from 'class-validator';
@@ -62,6 +63,7 @@ export class HierarchicalReorderItemDto {
   id: string;
 
   @ApiProperty({ description: 'New sort order position' })
+  @IsNumber()
   sortId: number;
 
   @ApiPropertyOptional({ description: 'New parent ID (null for root level)' })
