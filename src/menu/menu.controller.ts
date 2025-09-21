@@ -18,11 +18,19 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiProperty,
+  ApiPropertyOptional,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
-import { ArrayNotEmpty, IsArray, IsMongoId } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsMongoId,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import {
   CreateMenuItemDto,
   MenuItemDto,
@@ -46,6 +54,42 @@ export class ReorderDto {
   @ArrayNotEmpty()
   @IsMongoId({ each: true })
   itemIds: string[];
+}
+
+export class HierarchicalReorderItemDto {
+  @ApiProperty({ description: 'Menu item ID' })
+  @IsMongoId()
+  id: string;
+
+  @ApiProperty({ description: 'New sort order position' })
+  sortId: number;
+
+  @ApiPropertyOptional({ description: 'New parent ID (null for root level)' })
+  @IsMongoId()
+  @IsOptional()
+  parentId?: string;
+
+  @ApiPropertyOptional({
+    type: [HierarchicalReorderItemDto],
+    description: 'Child items with their new order',
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => HierarchicalReorderItemDto)
+  children?: HierarchicalReorderItemDto[];
+}
+
+export class HierarchicalReorderDto {
+  @ApiProperty({
+    type: [HierarchicalReorderItemDto],
+    description: 'Menu items with their new hierarchical order',
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => HierarchicalReorderItemDto)
+  items: HierarchicalReorderItemDto[];
 }
 
 @ApiTags('Menu')
@@ -225,6 +269,28 @@ export class MenuController {
       structuralSubtype,
       state,
       reorderDto.itemIds
+    );
+  }
+
+  @Post(
+    'domain/:domain/structural-subtype/:structuralSubtype/state/:state/reorder-hierarchical'
+  )
+  @ApiParam({ name: 'domain', enum: DomainEnum })
+  @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
+  @ApiParam({ name: 'state', enum: StateEnum })
+  @ApiBody({ type: HierarchicalReorderDto })
+  @ApiOkResponse({ type: MenuItemDto, isArray: true })
+  reorderMenuItemsHierarchical(
+    @Param('domain') domain: DomainEnum,
+    @Param('structuralSubtype') structuralSubtype: StructuralSubtypeEnum,
+    @Param('state') state: StateEnum,
+    @Body() reorderDto: HierarchicalReorderDto
+  ) {
+    return this.menuService.reorderMenuItemsHierarchical(
+      domain,
+      structuralSubtype,
+      state,
+      reorderDto.items
     );
   }
 

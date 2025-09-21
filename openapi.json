@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/example-crud/auth-test": {
+    "/navigational-list/auth-test": {
       "get": {
-        "operationId": "ExampleCrudController_authTest",
+        "operationId": "MenuController_authTest",
         "parameters": [],
         "responses": {
           "200": {
@@ -18,20 +18,20 @@
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       }
     },
-    "/example-crud": {
+    "/navigational-list": {
       "post": {
-        "operationId": "ExampleCrudController_create",
+        "operationId": "MenuController_create",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateExampleMongodbDocDto"
+                "$ref": "#/components/schemas/CreateMenuItemDto"
               }
             }
           }
@@ -42,24 +42,74 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       },
       "get": {
-        "operationId": "ExampleCrudController_findAll",
+        "operationId": "MenuController_findAll",
         "parameters": [
+          {
+            "name": "domain",
+            "required": false,
+            "in": "query",
+            "description": "Filter by domain",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "structuralSubtype",
+            "required": false,
+            "in": "query",
+            "description": "Filter by structural subtype",
+            "schema": {
+              "enum": [
+                "HEADER",
+                "NAV",
+                "FOOTER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "description": "Filter by state",
+            "schema": {
+              "enum": [
+                "FULL",
+                "RELAXED",
+                "COMPACT"
+              ],
+              "type": "string"
+            }
+          },
           {
             "name": "archived",
             "required": false,
             "in": "query",
             "description": "Filter by archived status",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "authRequired",
+            "required": false,
+            "in": "query",
+            "description": "Filter by authentication requirement",
             "schema": {
               "type": "boolean"
             }
@@ -73,7 +123,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                    "$ref": "#/components/schemas/MenuItemDto"
                   }
                 }
               }
@@ -81,13 +131,299 @@
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       }
     },
-    "/example-crud/{id}": {
+    "/navigational-list/hierarchy/{domain}": {
       "get": {
-        "operationId": "ExampleCrudController_findOne",
+        "operationId": "MenuController_getMenuHierarchy",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "description": "Include archived menu items",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete menu hierarchy for the domain"
+          }
+        },
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/navigational-list/domain/{domain}": {
+      "get": {
+        "operationId": "MenuController_findByDomain",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "description": "Include archived menu items",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MenuItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/navigational-list/domain/{domain}/structural-subtype/{structuralSubtype}": {
+      "get": {
+        "operationId": "MenuController_findByDomainAndStructuralSubtype",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "structuralSubtype",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "HEADER",
+                "NAV",
+                "FOOTER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "description": "Include archived menu items",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MenuItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/navigational-list/domain/{domain}/structural-subtype/{structuralSubtype}/state/{state}": {
+      "get": {
+        "operationId": "MenuController_findByDomainStructuralSubtypeAndState",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "structuralSubtype",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "HEADER",
+                "NAV",
+                "FOOTER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "FULL",
+                "RELAXED",
+                "COMPACT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "description": "Include archived menu items",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MenuItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/navigational-list/domain/{domain}/structural-subtype/{structuralSubtype}/state/{state}/reorder": {
+      "post": {
+        "operationId": "MenuController_reorderMenuItems",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "WORKSHOP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "structuralSubtype",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "HEADER",
+                "NAV",
+                "FOOTER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "FULL",
+                "RELAXED",
+                "COMPACT"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MenuItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/navigational-list/{id}": {
+      "get": {
+        "operationId": "MenuController_findOne",
         "parameters": [
           {
             "name": "id",
@@ -104,18 +440,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       },
       "patch": {
-        "operationId": "ExampleCrudController_update",
+        "operationId": "MenuController_update",
         "parameters": [
           {
             "name": "id",
@@ -131,7 +467,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateExampleMongodbDocDto"
+                "$ref": "#/components/schemas/UpdateMenuItemDto"
               }
             }
           }
@@ -142,18 +478,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       },
       "delete": {
-        "operationId": "ExampleCrudController_remove",
+        "operationId": "MenuController_remove",
         "parameters": [
           {
             "name": "id",
@@ -170,43 +506,13 @@
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       }
     },
-    "/example-crud/name/{name}": {
-      "get": {
-        "operationId": "ExampleCrudController_findByName",
-        "parameters": [
-          {
-            "name": "name",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Example Crud"
-        ]
-      }
-    },
-    "/example-crud/{id}/archive": {
+    "/navigational-list/{id}/archive": {
       "patch": {
-        "operationId": "ExampleCrudController_archive",
+        "operationId": "MenuController_archive",
         "parameters": [
           {
             "name": "id",
@@ -223,20 +529,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       }
     },
-    "/example-crud/{id}/unarchive": {
+    "/navigational-list/{id}/unarchive": {
       "patch": {
-        "operationId": "ExampleCrudController_unarchive",
+        "operationId": "MenuController_unarchive",
         "parameters": [
           {
             "name": "id",
@@ -253,14 +559,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExampleMongodbDocDto"
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Example Crud"
+          "Menu"
         ]
       }
     }
@@ -286,40 +592,51 @@
           "message"
         ]
       },
-      "ExampleMongodbDocObjectDto": {
+      "CreateMenuItemDto": {
         "type": "object",
         "properties": {
-          "street": {
+          "menuItemText": {
             "type": "string"
           },
-          "city": {
+          "routePath": {
             "type": "string"
           },
-          "state": {
+          "tooltipText": {
             "type": "string"
           },
-          "zip": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "street",
-          "city",
-          "state",
-          "zip"
-        ]
-      },
-      "CreateExampleMongodbDocDto": {
-        "type": "object",
-        "properties": {
-          "name": {
+          "navSvgPath": {
             "type": "string"
           },
-          "type": {
+          "headerSvgPath": {
+            "type": "string"
+          },
+          "sortId": {
+            "type": "number"
+          },
+          "authRequired": {
+            "type": "boolean"
+          },
+          "domain": {
             "type": "string",
             "enum": [
-              "SOME_ENUM",
-              "SOME_OTHER_ENUM"
+              "ADMIN",
+              "WORKSHOP"
+            ]
+          },
+          "structuralSubtype": {
+            "type": "string",
+            "enum": [
+              "HEADER",
+              "NAV",
+              "FOOTER"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "RELAXED",
+              "COMPACT"
             ]
           },
           "description": {
@@ -328,8 +645,16 @@
           "archived": {
             "type": "boolean"
           },
-          "exampleMongodbDocObject": {
-            "$ref": "#/components/schemas/ExampleMongodbDocObjectDto"
+          "parentId": {
+            "type": "string",
+            "description": "Parent menu item ID for hierarchical navigation"
+          },
+          "children": {
+            "description": "Child menu items for nested navigation",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMenuItemDto"
+            }
           },
           "lastUpdated": {
             "type": "string",
@@ -337,24 +662,62 @@
           }
         },
         "required": [
-          "name",
-          "type"
+          "menuItemText",
+          "routePath",
+          "sortId",
+          "domain",
+          "structuralSubtype",
+          "state"
         ]
       },
-      "ExampleMongodbDocDto": {
+      "MenuItemDto": {
         "type": "object",
         "properties": {
           "_id": {
             "type": "string"
           },
-          "name": {
+          "menuItemText": {
             "type": "string"
           },
-          "type": {
+          "routePath": {
+            "type": "string"
+          },
+          "tooltipText": {
+            "type": "string"
+          },
+          "navSvgPath": {
+            "type": "string"
+          },
+          "headerSvgPath": {
+            "type": "string"
+          },
+          "sortId": {
+            "type": "number"
+          },
+          "authRequired": {
+            "type": "boolean"
+          },
+          "domain": {
             "type": "string",
             "enum": [
-              "SOME_ENUM",
-              "SOME_OTHER_ENUM"
+              "ADMIN",
+              "WORKSHOP"
+            ]
+          },
+          "structuralSubtype": {
+            "type": "string",
+            "enum": [
+              "HEADER",
+              "NAV",
+              "FOOTER"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "RELAXED",
+              "COMPACT"
             ]
           },
           "version": {
@@ -370,17 +733,30 @@
           "archived": {
             "type": "boolean"
           },
-          "exampleMongodbDocObject": {
-            "$ref": "#/components/schemas/ExampleMongodbDocObjectDto"
-          },
           "__v": {
             "type": "number"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent menu item ID for hierarchical navigation"
+          },
+          "children": {
+            "description": "Child menu items for nested navigation",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuItemDto"
+            }
           }
         },
         "required": [
           "_id",
-          "name",
-          "type",
+          "menuItemText",
+          "routePath",
+          "sortId",
+          "authRequired",
+          "domain",
+          "structuralSubtype",
+          "state",
           "version",
           "description",
           "lastUpdated",
@@ -388,17 +764,65 @@
           "__v"
         ]
       },
-      "UpdateExampleMongodbDocDto": {
+      "ReorderDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "itemIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "itemIds"
+        ]
+      },
+      "UpdateMenuItemDto": {
+        "type": "object",
+        "properties": {
+          "menuItemText": {
             "type": "string"
           },
-          "type": {
+          "routePath": {
+            "type": "string"
+          },
+          "tooltipText": {
+            "type": "string"
+          },
+          "navSvgPath": {
+            "type": "string"
+          },
+          "headerSvgPath": {
+            "type": "string"
+          },
+          "sortId": {
+            "type": "number"
+          },
+          "authRequired": {
+            "type": "boolean"
+          },
+          "domain": {
             "type": "string",
             "enum": [
-              "SOME_ENUM",
-              "SOME_OTHER_ENUM"
+              "ADMIN",
+              "WORKSHOP"
+            ]
+          },
+          "structuralSubtype": {
+            "type": "string",
+            "enum": [
+              "HEADER",
+              "NAV",
+              "FOOTER"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "RELAXED",
+              "COMPACT"
             ]
           },
           "description": {
@@ -407,8 +831,16 @@
           "archived": {
             "type": "boolean"
           },
-          "exampleMongodbDocObject": {
-            "$ref": "#/components/schemas/ExampleMongodbDocObjectDto"
+          "parentId": {
+            "type": "string",
+            "description": "Parent menu item ID for hierarchical navigation"
+          },
+          "children": {
+            "description": "Child menu items for nested navigation",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMenuItemDto"
+            }
           },
           "lastUpdated": {
             "type": "string",
