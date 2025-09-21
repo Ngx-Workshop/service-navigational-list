@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum DomainEnum {
   ADMIN = 'ADMIN',
@@ -33,6 +33,8 @@ export interface MenuItem {
   sortId: number;
   // Authentication required to view the menu
   authRequired?: boolean;
+  // Parent menu item ID for hierarchical navigation
+  parentId?: Types.ObjectId | string;
 }
 
 export type MenuItemDocument = MenuItemDoc & Document;
@@ -59,6 +61,10 @@ export class MenuItemDoc extends Document implements MenuItem {
 
   @Prop({ default: false })
   authRequired?: boolean;
+
+  // Parent menu item for hierarchical navigation
+  @Prop({ type: Types.ObjectId, ref: 'MenuItemDoc', required: false })
+  parentId?: Types.ObjectId;
 
   // Hierarchy fields
   @Prop({ required: true, enum: DomainEnum })
@@ -88,6 +94,9 @@ export const MenuItemSchema = SchemaFactory.createForClass(MenuItemDoc);
 
 // Create compound index for efficient querying by domain, structural subtype, and state
 MenuItemSchema.index({ domain: 1, structuralSubtype: 1, state: 1, sortId: 1 });
+
+// Create index for parent-child relationships
+MenuItemSchema.index({ parentId: 1 });
 
 // Auto-increment version on updates
 MenuItemSchema.pre(

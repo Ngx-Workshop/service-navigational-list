@@ -1,13 +1,17 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import {
   DomainEnum,
@@ -54,6 +58,21 @@ export class MenuItemDto {
   @ApiProperty() archived: boolean;
 
   @ApiProperty() __v: number;
+
+  @ApiPropertyOptional({
+    description: 'Parent menu item ID for hierarchical navigation',
+  })
+  parentId?: string;
+
+  @ApiPropertyOptional({
+    type: [MenuItemDto],
+    description: 'Child menu items for nested navigation',
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => MenuItemDto)
+  children?: MenuItemDto[];
 }
 
 /**
@@ -119,6 +138,23 @@ export class CreateMenuItemDto {
   @IsBoolean()
   @IsOptional()
   archived?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Parent menu item ID for hierarchical navigation',
+  })
+  @IsMongoId()
+  @IsOptional()
+  parentId?: string;
+
+  @ApiPropertyOptional({
+    type: [CreateMenuItemDto],
+    description: 'Child menu items for nested navigation',
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMenuItemDto)
+  children?: CreateMenuItemDto[];
 
   // Expose in case clients want to explicitly set it; otherwise schema default (Date.now) applies
   @ApiPropertyOptional({ type: String, format: 'date-time' })
