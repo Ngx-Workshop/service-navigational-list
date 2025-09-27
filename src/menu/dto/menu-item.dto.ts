@@ -1,5 +1,4 @@
 import {
-  ApiExtraModels,
   ApiProperty,
   ApiPropertyOptional,
   getSchemaPath,
@@ -189,7 +188,6 @@ export type MenuHierarchyStructuralSubtypes = {
   };
 };
 
-@ApiExtraModels(MenuItemDto)
 export class MenuHierarchyResponseDto {
   @ApiProperty({ enum: DomainEnum })
   domain: DomainEnum;
@@ -213,11 +211,3 @@ export class MenuHierarchyResponseDto {
   })
   structuralSubtypes: MenuHierarchyStructuralSubtypes;
 }
-
-// structuralSubtypes: {
-//   [key in StructuralSubtypeEnum]?: {
-//     states: {
-//       [key in StateEnum]?: MenuItemDto[];
-//     };
-//   };
-// };
