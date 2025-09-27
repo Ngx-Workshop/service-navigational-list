@@ -1,11 +1,11 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { lastValueFrom, of } from 'rxjs';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
@@ -22,16 +22,12 @@ import {
 
 @Injectable()
 export class MenuService {
+  logger = new Logger(MenuService.name);
+
   constructor(
     @InjectModel(MenuItemDoc.name)
     private menuItemModel: Model<MenuItemDocument>
   ) {}
-
-  async authTest(): Promise<{ message: string }> {
-    return lastValueFrom(
-      of({ message: 'Authentication successful Menu Service' })
-    );
-  }
 
   async create(createMenuItemDto: CreateMenuItemDto): Promise<MenuItemDoc> {
     try {
@@ -213,17 +209,29 @@ export class MenuService {
   }
 
   async reorderMenuItems(updateItem: SortMenuItemDto): Promise<MenuItemDoc> {
+    this.logger.debug(
+      `reorderMenuItems called with payload: ${JSON.stringify(updateItem)}`
+    );
     const existing = await this.findOne(updateItem._id);
     if (!existing) {
       throw new NotFoundException(
         `MenuItem with ID "${updateItem._id}" not found`
       );
     }
+    this.logger.debug(
+      `Existing item before move: id=${existing._id?.toString?.()} parentId=${(existing as any).parentId?.toString?.()} sortId=${existing.sortId}`
+    );
 
     // Ensure requested sort position is at least 1 (DTO allows 0)
     let requestedPosition = Math.max(1, Math.floor(updateItem.sortId));
+    this.logger.debug(
+      `Initial requested position (normalized) = ${requestedPosition}`
+    );
 
     const parentChanged = existing.parentId !== updateItem.parentId;
+    this.logger.debug(
+      `Parent changed? ${parentChanged} (from=${(existing as any).parentId?.toString?.()} to=${updateItem.parentId})`
+    );
 
     // 1. If parent changed, resequence OLD siblings first (closing the gap)
     if (parentChanged) {
@@ -231,6 +239,9 @@ export class MenuService {
         .find({ parentId: existing.parentId, _id: { $ne: existing._id } })
         .sort({ sortId: 1 })
         .exec();
+      this.logger.debug(
+        `Old siblings (excluding moving item) count=${oldSiblings.length}: ${oldSiblings.map((s) => `${s._id}:${s.sortId}`).join(', ')}`
+      );
 
       if (oldSiblings.length) {
         const bulkOld = oldSiblings.map((doc, idx) => ({
@@ -240,6 +251,9 @@ export class MenuService {
           },
         }));
         await this.menuItemModel.bulkWrite(bulkOld);
+        this.logger.debug(
+          `Old siblings resequenced. New order: ${oldSiblings.map((_, idx) => `${oldSiblings[idx]._id}:${idx + 1}`).join(', ')}`
+        );
       }
     }
 
@@ -254,11 +268,15 @@ export class MenuService {
       .find(siblingFilter)
       .sort({ sortId: 1 })
       .exec();
+    this.logger.debug(
+      `Target parent siblings pre-resequence count=${siblings.length}: ${siblings.map((s) => `${s._id}:${s.sortId}`).join(', ')}`
+    );
 
     // Clamp requested position within [1, siblings.length + 1]
     if (requestedPosition > siblings.length + 1) {
       requestedPosition = siblings.length + 1;
     }
+    this.logger.debug(`Clamped requested position = ${requestedPosition}`);
 
     // Build bulk operations assigning new contiguous sortIds including the moved item placeholder
     const bulkOps: any[] = [];
@@ -278,18 +296,32 @@ export class MenuService {
       }
       runningIndex++;
     }
+    this.logger.debug(`Bulk ops to update siblings count=${bulkOps.length}`);
 
     if (bulkOps.length) {
       await this.menuItemModel.bulkWrite(bulkOps);
+      const updatedSiblings = await this.menuItemModel
+        .find(siblingFilter)
+        .sort({ sortId: 1 })
+        .exec();
+      this.logger.debug(
+        `Siblings after resequence (excluding moved item placeholder): ${updatedSiblings.map((s) => `${s._id}:${s.sortId}`).join(', ')}`
+      );
     }
 
     // 3. Persist moved item with its new parent & sortId
     const existingId: string =
       (existing as any)._id?.toString() ?? (existing as any).id;
+    this.logger.debug(
+      `Persisting moved item id=${existingId} -> parentId=${updateItem.parentId} sortId=${requestedPosition}`
+    );
     const updatedItem = await this.update(existingId, {
       parentId: targetParentId,
       sortId: requestedPosition,
     });
+    this.logger.debug(
+      `Updated item result: id=${updatedItem._id?.toString?.()} parentId=${(updatedItem as any).parentId?.toString?.()} sortId=${updatedItem.sortId}`
+    );
 
     return updatedItem;
   }
