@@ -233,10 +233,31 @@ export class MenuService {
       `Parent changed? ${parentChanged} (from=${(existing as any).parentId?.toString?.()} to=${updateItem.parentId})`
     );
 
+    // Helper to build sibling filter respecting domain/subtype/state AND distinguishing root-level (no parent)
+    const buildSiblingFilter = (parentId: any, excludeId: any) => {
+      const base: any = {
+        _id: { $ne: excludeId },
+        domain: existing.domain,
+        structuralSubtype: existing.structuralSubtype,
+        state: existing.state,
+      };
+      if (parentId) {
+        base.parentId = parentId;
+      } else {
+        // root-level: match docs with no parentId field OR null
+        base.$or = [{ parentId: { $exists: false } }, { parentId: null }];
+      }
+      return base;
+    };
+
     // 1. If parent changed, resequence OLD siblings first (closing the gap)
     if (parentChanged) {
+      const oldSiblingsFilter = buildSiblingFilter(
+        existing.parentId,
+        existing._id
+      );
       const oldSiblings = await this.menuItemModel
-        .find({ parentId: existing.parentId, _id: { $ne: existing._id } })
+        .find(oldSiblingsFilter)
         .sort({ sortId: 1 })
         .exec();
       this.logger.debug(
@@ -260,10 +281,7 @@ export class MenuService {
     // 2. Resequence NEW siblings (or same-parent siblings if parent not changed) inserting the moved item at requested position
     //    For same-parent reorders we exclude the moving item; for parent change it is already excluded naturally.
     const targetParentId = updateItem.parentId;
-    const siblingFilter: any = {
-      parentId: targetParentId,
-      _id: { $ne: existing._id },
-    };
+    const siblingFilter: any = buildSiblingFilter(targetParentId, existing._id);
     const siblings = await this.menuItemModel
       .find(siblingFilter)
       .sort({ sortId: 1 })
@@ -315,10 +333,39 @@ export class MenuService {
     this.logger.debug(
       `Persisting moved item id=${existingId} -> parentId=${updateItem.parentId} sortId=${requestedPosition}`
     );
-    const updatedItem = await this.update(existingId, {
-      parentId: targetParentId,
-      sortId: requestedPosition,
-    });
+    let updatedItem: MenuItemDoc | null = null;
+    if (targetParentId) {
+      updatedItem = await this.menuItemModel
+        .findByIdAndUpdate(
+          existingId,
+          {
+            $set: {
+              parentId: targetParentId,
+              sortId: requestedPosition,
+              lastUpdated: new Date(),
+            },
+          },
+          { new: true }
+        )
+        .exec();
+    } else {
+      // Moving to root: need to unset parentId explicitly
+      updatedItem = await this.menuItemModel
+        .findByIdAndUpdate(
+          existingId,
+          {
+            $unset: { parentId: '' },
+            $set: { sortId: requestedPosition, lastUpdated: new Date() },
+          },
+          { new: true }
+        )
+        .exec();
+    }
+    if (!updatedItem) {
+      throw new NotFoundException(
+        `MenuItem with ID "${existingId}" not found during final update`
+      );
+    }
     this.logger.debug(
       `Updated item result: id=${updatedItem._id?.toString?.()} parentId=${(updatedItem as any).parentId?.toString?.()} sortId=${updatedItem.sortId}`
     );
