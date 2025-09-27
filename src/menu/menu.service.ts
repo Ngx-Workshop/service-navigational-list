@@ -212,67 +212,83 @@ export class MenuService {
     return hierarchy;
   }
 
-  /**
-   * Reorder menu items within a specific domain, structural subtype, and state
-   */
   async reorderMenuItems(updateItem: SortMenuItemDto): Promise<MenuItemDoc> {
-    const previousItem = await this.findOne(updateItem._id);
-    if (!previousItem) {
+    const existing = await this.findOne(updateItem._id);
+    if (!existing) {
       throw new NotFoundException(
         `MenuItem with ID "${updateItem._id}" not found`
       );
     }
-    // If the parent id is unchanged no need to reorder previous siblings sortIds
-    // It parent id has changed, reorder previous siblings and new siblings sortIds
-    // No need to even check if Domain Subtype or State has changed, it won't matter
-    if (previousItem.parentId !== updateItem.parentId) {
-      // Reorder previous siblings
-      const previousSiblings = await this.menuItemModel
-        .find({
-          parentId: previousItem.parentId,
-          domain: previousItem.domain,
-          structuralSubtype: previousItem.structuralSubtype,
-          state: previousItem.state,
-          _id: { $ne: previousItem._id },
-        })
+
+    // Ensure requested sort position is at least 1 (DTO allows 0)
+    let requestedPosition = Math.max(1, Math.floor(updateItem.sortId));
+
+    const parentChanged = existing.parentId !== updateItem.parentId;
+
+    // 1. If parent changed, resequence OLD siblings first (closing the gap)
+    if (parentChanged) {
+      const oldSiblings = await this.menuItemModel
+        .find({ parentId: existing.parentId, _id: { $ne: existing._id } })
         .sort({ sortId: 1 })
         .exec();
 
-      for (let i = 0; i < previousSiblings.length; i++) {
-        previousSiblings[i].sortId = i + 1;
-        await previousSiblings[i].save();
-      }
-
-      // Reorder new siblings
-      const newSiblings = await this.menuItemModel
-        .find({
-          parentId: updateItem.parentId,
-          _id: { $ne: updateItem._id },
-        })
-        .sort({ sortId: 1 })
-        .exec();
-
-      // Insert the updated item into the correct position based on its sortId
-      let inserted = false;
-      for (let i = 0; i < newSiblings.length; i++) {
-        if (!inserted && updateItem.sortId <= newSiblings[i].sortId) {
-          updateItem.sortId = i + 1;
-          inserted = true;
-        }
-        newSiblings[i].sortId = inserted ? i + 2 : i + 1;
-        await newSiblings[i].save();
-      }
-
-      // If not yet inserted, it goes to the end
-      if (!inserted) {
-        updateItem.sortId = newSiblings.length + 1;
+      if (oldSiblings.length) {
+        const bulkOld = oldSiblings.map((doc, idx) => ({
+          updateOne: {
+            filter: { _id: doc._id },
+            update: { $set: { sortId: idx + 1 } },
+          },
+        }));
+        await this.menuItemModel.bulkWrite(bulkOld);
       }
     }
 
-    // Finally update the moved item
-    const updatedItem = await this.update(updateItem._id, {
-      parentId: updateItem.parentId,
-      sortId: updateItem.sortId,
+    // 2. Resequence NEW siblings (or same-parent siblings if parent not changed) inserting the moved item at requested position
+    //    For same-parent reorders we exclude the moving item; for parent change it is already excluded naturally.
+    const targetParentId = updateItem.parentId;
+    const siblingFilter: any = {
+      parentId: targetParentId,
+      _id: { $ne: existing._id },
+    };
+    const siblings = await this.menuItemModel
+      .find(siblingFilter)
+      .sort({ sortId: 1 })
+      .exec();
+
+    // Clamp requested position within [1, siblings.length + 1]
+    if (requestedPosition > siblings.length + 1) {
+      requestedPosition = siblings.length + 1;
+    }
+
+    // Build bulk operations assigning new contiguous sortIds including the moved item placeholder
+    const bulkOps: any[] = [];
+    let runningIndex = 1;
+    for (const sib of siblings) {
+      if (runningIndex === requestedPosition) {
+        // reserve this spot for the moved item
+        runningIndex++; // moved item will take (requestedPosition)
+      }
+      if (sib.sortId !== runningIndex) {
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: sib._id },
+            update: { $set: { sortId: runningIndex } },
+          },
+        });
+      }
+      runningIndex++;
+    }
+
+    if (bulkOps.length) {
+      await this.menuItemModel.bulkWrite(bulkOps);
+    }
+
+    // 3. Persist moved item with its new parent & sortId
+    const existingId: string =
+      (existing as any)._id?.toString() ?? (existing as any).id;
+    const updatedItem = await this.update(existingId, {
+      parentId: targetParentId,
+      sortId: requestedPosition,
     });
 
     return updatedItem;
