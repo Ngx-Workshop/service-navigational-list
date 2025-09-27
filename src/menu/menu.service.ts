@@ -287,7 +287,7 @@ export class MenuService {
       .sort({ sortId: 1 })
       .exec();
     this.logger.debug(
-      `Target parent siblings pre-resequence count=${siblings.length}: ${siblings.map((s) => `${s._id}:${s.sortId}`).join(', ')}`
+      `Target parent=${targetParentId} siblings pre-resequence count=${siblings.length}: ${siblings.map((s) => `${s._id}:${s.sortId}`).join(', ')}`
     );
 
     // Clamp requested position within [1, siblings.length + 1]
