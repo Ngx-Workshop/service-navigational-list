@@ -1,4 +1,10 @@
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+  PartialType,
+} from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
@@ -174,3 +180,44 @@ export class MenuQueryDto {
   @IsOptional()
   authRequired?: boolean;
 }
+
+export type MenuHierarchyStructuralSubtypes = {
+  [key in StructuralSubtypeEnum]?: {
+    states: {
+      [key in StateEnum]?: MenuItemDto[];
+    };
+  };
+};
+
+@ApiExtraModels(MenuItemDto)
+export class MenuHierarchyResponseDto {
+  @ApiProperty({ enum: DomainEnum })
+  domain: DomainEnum;
+
+  @ApiProperty({
+    description:
+      'Mapping of structural subtypes to their state groupings of menu items',
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      properties: {
+        states: {
+          type: 'object',
+          additionalProperties: {
+            type: 'array',
+            items: { $ref: getSchemaPath(MenuItemDto) },
+          },
+        },
+      },
+    },
+  })
+  structuralSubtypes: MenuHierarchyStructuralSubtypes;
+}
+
+// structuralSubtypes: {
+//   [key in StructuralSubtypeEnum]?: {
+//     states: {
+//       [key in StateEnum]?: MenuItemDto[];
+//     };
+//   };
+// };

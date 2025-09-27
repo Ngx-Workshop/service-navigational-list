@@ -6,7 +6,11 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { lastValueFrom, of } from 'rxjs';
-import { CreateMenuItemDto, UpdateMenuItemDto } from './dto/menu-item.dto';
+import {
+  CreateMenuItemDto,
+  MenuHierarchyResponseDto,
+  UpdateMenuItemDto,
+} from './dto/menu-item.dto';
 import {
   DomainEnum,
   MenuItemDoc,
@@ -14,12 +18,6 @@ import {
   StateEnum,
   StructuralSubtypeEnum,
 } from './schemas/menu-item.schema';
-
-export interface HierarchicalReorderItem {
-  id: string;
-  sortId: number;
-  parentId?: string;
-}
 
 @Injectable()
 export class MenuService {
@@ -182,16 +180,7 @@ export class MenuService {
   async getMenuHierarchy(
     domain: DomainEnum,
     includeArchived = false
-  ): Promise<{
-    domain: DomainEnum;
-    structuralSubtypes: {
-      [key in StructuralSubtypeEnum]?: {
-        states: {
-          [key in StateEnum]?: MenuItemDoc[];
-        };
-      };
-    };
-  }> {
+  ): Promise<MenuHierarchyResponseDto> {
     const menuItems = await this.findByDomain(domain, includeArchived);
 
     const hierarchy: any = {

@@ -9,7 +9,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -17,23 +16,12 @@ import {
   ApiNoContentResponse,
   ApiOkResponse,
   ApiParam,
-  ApiProperty,
-  ApiPropertyOptional,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
-import { Type } from 'class-transformer';
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsMongoId,
-  IsNumber,
-  IsOptional,
-  ValidateNested,
-} from 'class-validator';
 import {
   CreateMenuItemDto,
+  MenuHierarchyResponseDto,
   MenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
@@ -44,57 +32,10 @@ import {
   StructuralSubtypeEnum,
 } from './schemas/menu-item.schema';
 
-export class AuthTestDto {
-  @ApiProperty()
-  message: string;
-}
-
-export class ReorderDto {
-  @ApiProperty({ type: [String] })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  itemIds: string[];
-}
-
-export class HierarchicalReorderItemDto {
-  @ApiProperty({ description: 'Menu item ID' })
-  @IsMongoId()
-  id: string;
-
-  @ApiProperty({ description: 'New sort order position' })
-  @IsNumber()
-  sortId: number;
-
-  @ApiPropertyOptional({ description: 'New parent ID (null for root level)' })
-  @IsMongoId()
-  @IsOptional()
-  parentId?: string;
-}
-
-export class HierarchicalReorderDto {
-  @ApiProperty({
-    type: [HierarchicalReorderItemDto],
-    description: 'Menu items with their new hierarchical order',
-  })
-  @IsArray()
-  @ArrayNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => HierarchicalReorderItemDto)
-  items: HierarchicalReorderItemDto[];
-}
-
 @ApiTags('Menu')
 @Controller('navigational-list')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
-
-  @Get('auth-test')
-  @UseGuards(RemoteAuthGuard)
-  @ApiOkResponse({ type: AuthTestDto })
-  authTest() {
-    return this.menuService.authTest();
-  }
 
   @Post()
   @ApiCreatedResponse({ type: MenuItemDto })
@@ -167,7 +108,10 @@ export class MenuController {
     type: Boolean,
     description: 'Include archived menu items',
   })
-  @ApiOkResponse({ description: 'Complete menu hierarchy for the domain' })
+  @ApiOkResponse({
+    type: MenuHierarchyResponseDto,
+    description: 'Complete menu hierarchy for the domain',
+  })
   getMenuHierarchy(
     @Param('domain') domain: DomainEnum,
     @Query('includeArchived') includeArchived?: string
