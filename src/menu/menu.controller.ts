@@ -186,12 +186,11 @@ export class MenuController {
     );
   }
 
-  @Post('sort/:id')
-  @ApiParam({ name: 'id', description: 'Menu item ID to reposition' })
+  @Post('sort')
   @ApiBody({ type: MenuItemDto })
   @ApiOkResponse({ type: MenuItemDto })
   reorderMenuItems(@Body() menuItemDto: MenuItemDto) {
-    return this.menuService.reorderMenuItems(menuItemDto._id);
+    return this.menuService.reorderMenuItems(menuItemDto);
   }
 
   @Get(':id')

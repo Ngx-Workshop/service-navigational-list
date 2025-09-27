@@ -9,6 +9,7 @@ import { lastValueFrom, of } from 'rxjs';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
+  MenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
 import {
@@ -214,7 +215,69 @@ export class MenuService {
   /**
    * Reorder menu items within a specific domain, structural subtype, and state
    */
-  async reorderMenuItems(itemId: string): Promise<MenuItemDoc> {
-    return await this.findOne(itemId);
+  async reorderMenuItems(updateItem: MenuItemDto): Promise<MenuItemDoc> {
+    const previousItem = await this.findOne(updateItem._id);
+    if (!previousItem) {
+      throw new NotFoundException(
+        `MenuItem with ID "${updateItem._id}" not found`
+      );
+    }
+    // If the parent id is unchanged no need to reorder previous siblings sortIds
+    // It parent id has changed, reorder previous siblings and new siblings sortIds
+    // No need to even check if Domain Subtype or State has changed, it won't matter
+    if (previousItem.parentId !== updateItem.parentId) {
+      // Reorder previous siblings
+      const previousSiblings = await this.menuItemModel
+        .find({
+          parentId: previousItem.parentId,
+          domain: previousItem.domain,
+          structuralSubtype: previousItem.structuralSubtype,
+          state: previousItem.state,
+          _id: { $ne: previousItem._id },
+        })
+        .sort({ sortId: 1 })
+        .exec();
+
+      for (let i = 0; i < previousSiblings.length; i++) {
+        previousSiblings[i].sortId = i + 1;
+        await previousSiblings[i].save();
+      }
+
+      // Reorder new siblings
+      const newSiblings = await this.menuItemModel
+        .find({
+          parentId: updateItem.parentId,
+          domain: updateItem.domain,
+          structuralSubtype: updateItem.structuralSubtype,
+          state: updateItem.state,
+          _id: { $ne: updateItem._id },
+        })
+        .sort({ sortId: 1 })
+        .exec();
+
+      // Insert the updated item into the correct position based on its sortId
+      let inserted = false;
+      for (let i = 0; i < newSiblings.length; i++) {
+        if (!inserted && updateItem.sortId <= newSiblings[i].sortId) {
+          updateItem.sortId = i + 1;
+          inserted = true;
+        }
+        newSiblings[i].sortId = inserted ? i + 2 : i + 1;
+        await newSiblings[i].save();
+      }
+
+      // If not yet inserted, it goes to the end
+      if (!inserted) {
+        updateItem.sortId = newSiblings.length + 1;
+      }
+    }
+
+    // Finally update the moved item
+    const updatedItem = await this.update(updateItem._id, {
+      parentId: updateItem.parentId,
+      sortId: updateItem.sortId,
+    });
+
+    return updatedItem;
   }
 }
