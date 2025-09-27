@@ -23,6 +23,7 @@ import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
   MenuItemDto,
+  SortMenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
 import { MenuService } from './menu.service';
@@ -189,7 +190,7 @@ export class MenuController {
   @Post('sort')
   @ApiBody({ type: MenuItemDto })
   @ApiOkResponse({ type: MenuItemDto })
-  reorderMenuItems(@Body() menuItemDto: MenuItemDto) {
+  reorderMenuItems(@Body() menuItemDto: SortMenuItemDto) {
     return this.menuService.reorderMenuItems(menuItemDto);
   }
 

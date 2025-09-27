@@ -149,6 +149,24 @@ export class CreateMenuItemDto {
  * UPDATE DTO – Partial of Create DTO
  */
 export class UpdateMenuItemDto extends PartialType(CreateMenuItemDto) {}
+export class SortMenuItemDto {
+  @ApiProperty()
+  @IsMongoId()
+  @IsNotEmpty()
+  _id: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
+  sortId: number;
+
+  @ApiPropertyOptional({
+    description: 'Parent menu item ID for hierarchical navigation',
+  })
+  @IsMongoId()
+  @IsOptional()
+  parentId?: string;
+}
 
 /**
  * Query parameters for filtering menu items

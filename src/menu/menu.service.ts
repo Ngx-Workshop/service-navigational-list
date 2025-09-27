@@ -9,7 +9,7 @@ import { lastValueFrom, of } from 'rxjs';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
-  MenuItemDto,
+  SortMenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
 import {
@@ -215,7 +215,7 @@ export class MenuService {
   /**
    * Reorder menu items within a specific domain, structural subtype, and state
    */
-  async reorderMenuItems(updateItem: MenuItemDto): Promise<MenuItemDoc> {
+  async reorderMenuItems(updateItem: SortMenuItemDto): Promise<MenuItemDoc> {
     const previousItem = await this.findOne(updateItem._id);
     if (!previousItem) {
       throw new NotFoundException(
@@ -247,9 +247,6 @@ export class MenuService {
       const newSiblings = await this.menuItemModel
         .find({
           parentId: updateItem.parentId,
-          domain: updateItem.domain,
-          structuralSubtype: updateItem.structuralSubtype,
-          state: updateItem.state,
           _id: { $ne: updateItem._id },
         })
         .sort({ sortId: 1 })
