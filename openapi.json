@@ -348,47 +348,16 @@
         ]
       }
     },
-    "/navigational-list/domain/{domain}/structural-subtype/{structuralSubtype}/state/{state}/reorder": {
+    "/navigational-list/sort/{id}": {
       "post": {
         "operationId": "MenuController_reorderMenuItems",
         "parameters": [
           {
-            "name": "domain",
+            "name": "id",
             "required": true,
             "in": "path",
-            "schema": {
-              "enum": [
-                "ADMIN",
-                "WORKSHOP"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "structuralSubtype",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "enum": [
-                "HEADER",
-                "NAV",
-                "FOOTER"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "state",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "enum": [
-                "FULL",
-                "RELAXED",
-                "COMPACT"
-              ],
-              "type": "string"
-            }
+            "description": "Menu item ID to reposition",
+            "schema": {}
           }
         ],
         "requestBody": {
@@ -396,7 +365,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReorderDto"
+                "$ref": "#/components/schemas/MenuItemDto"
               }
             }
           }
@@ -407,10 +376,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/MenuItemDto"
-                  }
+                  "$ref": "#/components/schemas/MenuItemDto"
                 }
               }
             }
@@ -649,13 +615,6 @@
             "type": "string",
             "description": "Parent menu item ID for hierarchical navigation"
           },
-          "children": {
-            "description": "Child menu items for nested navigation",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateMenuItemDto"
-            }
-          },
           "lastUpdated": {
             "type": "string",
             "format": "date-time"
@@ -739,13 +698,6 @@
           "parentId": {
             "type": "string",
             "description": "Parent menu item ID for hierarchical navigation"
-          },
-          "children": {
-            "description": "Child menu items for nested navigation",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MenuItemDto"
-            }
           }
         },
         "required": [
@@ -762,20 +714,6 @@
           "lastUpdated",
           "archived",
           "__v"
-        ]
-      },
-      "ReorderDto": {
-        "type": "object",
-        "properties": {
-          "itemIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "itemIds"
         ]
       },
       "UpdateMenuItemDto": {
@@ -834,13 +772,6 @@
           "parentId": {
             "type": "string",
             "description": "Parent menu item ID for hierarchical navigation"
-          },
-          "children": {
-            "description": "Child menu items for nested navigation",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateMenuItemDto"
-            }
           },
           "lastUpdated": {
             "type": "string",

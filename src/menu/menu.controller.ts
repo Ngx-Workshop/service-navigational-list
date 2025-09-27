@@ -70,16 +70,6 @@ export class HierarchicalReorderItemDto {
   @IsMongoId()
   @IsOptional()
   parentId?: string;
-
-  @ApiPropertyOptional({
-    type: [HierarchicalReorderItemDto],
-    description: 'Child items with their new order',
-  })
-  @IsArray()
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => HierarchicalReorderItemDto)
-  children?: HierarchicalReorderItemDto[];
 }
 
 export class HierarchicalReorderDto {
@@ -252,48 +242,12 @@ export class MenuController {
     );
   }
 
-  @Post(
-    'domain/:domain/structural-subtype/:structuralSubtype/state/:state/reorder'
-  )
-  @ApiParam({ name: 'domain', enum: DomainEnum })
-  @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
-  @ApiParam({ name: 'state', enum: StateEnum })
-  @ApiBody({ type: ReorderDto })
-  @ApiOkResponse({ type: MenuItemDto, isArray: true })
-  reorderMenuItems(
-    @Param('domain') domain: DomainEnum,
-    @Param('structuralSubtype') structuralSubtype: StructuralSubtypeEnum,
-    @Param('state') state: StateEnum,
-    @Body() reorderDto: ReorderDto
-  ) {
-    return this.menuService.reorderMenuItems(
-      domain,
-      structuralSubtype,
-      state,
-      reorderDto.itemIds
-    );
-  }
-
-  @Post(
-    'domain/:domain/structural-subtype/:structuralSubtype/state/:state/reorder-hierarchical'
-  )
-  @ApiParam({ name: 'domain', enum: DomainEnum })
-  @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
-  @ApiParam({ name: 'state', enum: StateEnum })
-  @ApiBody({ type: HierarchicalReorderDto })
-  @ApiOkResponse({ type: MenuItemDto, isArray: true })
-  reorderMenuItemsHierarchical(
-    @Param('domain') domain: DomainEnum,
-    @Param('structuralSubtype') structuralSubtype: StructuralSubtypeEnum,
-    @Param('state') state: StateEnum,
-    @Body() reorderDto: HierarchicalReorderDto
-  ) {
-    return this.menuService.reorderMenuItemsHierarchical(
-      domain,
-      structuralSubtype,
-      state,
-      reorderDto.items
-    );
+  @Post('sort/:id')
+  @ApiParam({ name: 'id', description: 'Menu item ID to reposition' })
+  @ApiBody({ type: MenuItemDto })
+  @ApiOkResponse({ type: MenuItemDto })
+  reorderMenuItems(@Body() menuItemDto: MenuItemDto) {
+    return this.menuService.reorderMenuItems(menuItemDto._id);
   }
 
   @Get(':id')

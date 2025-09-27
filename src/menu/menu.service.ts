@@ -1,11 +1,10 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { lastValueFrom, of } from 'rxjs';
 import { CreateMenuItemDto, UpdateMenuItemDto } from './dto/menu-item.dto';
 import {
@@ -20,7 +19,6 @@ export interface HierarchicalReorderItem {
   id: string;
   sortId: number;
   parentId?: string;
-  children?: HierarchicalReorderItem[];
 }
 
 @Injectable()
@@ -227,116 +225,7 @@ export class MenuService {
   /**
    * Reorder menu items within a specific domain, structural subtype, and state
    */
-  async reorderMenuItems(
-    domain: DomainEnum,
-    structuralSubtype: StructuralSubtypeEnum,
-    state: StateEnum,
-    itemIds: string[]
-  ): Promise<MenuItemDoc[]> {
-    const updates = itemIds.map((id, index) => ({
-      updateOne: {
-        filter: { _id: id, domain, structuralSubtype, state },
-        update: { sortId: index, lastUpdated: new Date() },
-      },
-    }));
-
-    await this.menuItemModel.bulkWrite(updates);
-
-    return await this.findByDomainStructuralSubtypeAndState(
-      domain,
-      structuralSubtype,
-      state
-    );
-  }
-
-  /**
-   * Reorder menu items hierarchically within a specific domain, structural subtype, and state
-   */
-  async reorderMenuItemsHierarchical(
-    domain: DomainEnum,
-    structuralSubtype: StructuralSubtypeEnum,
-    state: StateEnum,
-    items: HierarchicalReorderItem[]
-  ): Promise<MenuItemDoc[]> {
-    // Validate that all items exist and belong to the specified domain/subtype/state
-    const allItemIds = this.extractAllIds(items);
-    const existingItems = await this.menuItemModel
-      .find({
-        _id: { $in: allItemIds },
-        domain,
-        structuralSubtype,
-        state,
-      })
-      .exec();
-
-    if (existingItems.length !== allItemIds.length) {
-      throw new BadRequestException(
-        'Some menu items do not exist or do not belong to the specified domain/subtype/state'
-      );
-    }
-
-    // Build bulk updates for hierarchical reordering
-    const updates = this.buildHierarchicalUpdates(items);
-
-    if (updates.length > 0) {
-      await this.menuItemModel.bulkWrite(updates);
-    }
-
-    return await this.findByDomainStructuralSubtypeAndState(
-      domain,
-      structuralSubtype,
-      state
-    );
-  }
-
-  /**
-   * Recursively extract all item IDs from hierarchical structure
-   */
-  private extractAllIds(items: HierarchicalReorderItem[]): string[] {
-    const ids: string[] = [];
-
-    for (const item of items) {
-      ids.push(item.id);
-      if (item.children && item.children.length > 0) {
-        ids.push(...this.extractAllIds(item.children));
-      }
-    }
-
-    return ids;
-  }
-
-  /**
-   * Build bulk update operations for hierarchical reordering
-   */
-  private buildHierarchicalUpdates(items: HierarchicalReorderItem[]): any[] {
-    const updates: any[] = [];
-
-    for (const item of items) {
-      const updateData: any = {
-        sortId: item.sortId,
-        lastUpdated: new Date(),
-      };
-
-      // Handle parentId updates
-      if (item.parentId !== undefined) {
-        updateData.parentId = item.parentId
-          ? new Types.ObjectId(item.parentId)
-          : null;
-      }
-
-      updates.push({
-        updateOne: {
-          filter: { _id: item.id },
-          update: updateData,
-        },
-      });
-
-      // Recursively handle children
-      if (item.children && item.children.length > 0) {
-        updates.push(...this.buildHierarchicalUpdates(item.children));
-      }
-    }
-
-    return updates;
+  async reorderMenuItems(itemId: string): Promise<MenuItemDoc> {
+    return await this.findOne(itemId);
   }
 }
