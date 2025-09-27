@@ -188,7 +188,7 @@ export class MenuController {
   }
 
   @Post('sort')
-  @ApiBody({ type: MenuItemDto })
+  @ApiBody({ type: SortMenuItemDto })
   @ApiOkResponse({ type: MenuItemDto })
   reorderMenuItems(@Body() menuItemDto: SortMenuItemDto) {
     return this.menuService.reorderMenuItems(menuItemDto);
