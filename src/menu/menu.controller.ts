@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -19,6 +20,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
@@ -39,6 +41,7 @@ export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
   @Post()
+  @UseGuards(RemoteAuthGuard)
   @ApiCreatedResponse({ type: MenuItemDto })
   create(@Body() createMenuItemDto: CreateMenuItemDto) {
     return this.menuService.create(createMenuItemDto);
@@ -188,6 +191,7 @@ export class MenuController {
   }
 
   @Post('sort')
+  @UseGuards(RemoteAuthGuard)
   @ApiBody({ type: SortMenuItemDto })
   @ApiOkResponse({ type: MenuItemDto })
   reorderMenuItems(@Body() menuItemDto: SortMenuItemDto) {
@@ -210,6 +214,7 @@ export class MenuController {
   }
 
   @Delete(':id')
+  @UseGuards(RemoteAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   remove(@Param('id') id: string) {
@@ -217,12 +222,14 @@ export class MenuController {
   }
 
   @Patch(':id/archive')
+  @UseGuards(RemoteAuthGuard)
   @ApiOkResponse({ type: MenuItemDto })
   archive(@Param('id') id: string) {
     return this.menuService.archive(id);
   }
 
   @Patch(':id/unarchive')
+  @UseGuards(RemoteAuthGuard)
   @ApiOkResponse({ type: MenuItemDto })
   unarchive(@Param('id') id: string) {
     return this.menuService.unarchive(id);
