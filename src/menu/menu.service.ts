@@ -243,6 +243,7 @@ export class MenuService {
       };
       if (parentId) {
         base.parentId = parentId;
+        this.logger.debug(`Building sibling filter for parentId=${parentId}`);
       } else {
         // root-level: match docs with no parentId field OR null
         base.$or = [{ parentId: { $exists: false } }, { parentId: null }];
