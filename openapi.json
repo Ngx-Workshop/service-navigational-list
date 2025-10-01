@@ -1,27 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/navigational-list/auth-test": {
-      "get": {
-        "operationId": "MenuController_authTest",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTestDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Menu"
-        ]
-      }
-    },
     "/navigational-list": {
       "post": {
         "operationId": "MenuController_create",
@@ -163,7 +142,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Complete menu hierarchy for the domain"
+            "description": "Complete menu hierarchy for the domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuHierarchyResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -348,24 +334,16 @@
         ]
       }
     },
-    "/navigational-list/sort/{id}": {
+    "/navigational-list/sort": {
       "post": {
         "operationId": "MenuController_reorderMenuItems",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Menu item ID to reposition",
-            "schema": {}
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MenuItemDto"
+                "$ref": "#/components/schemas/SortMenuItemDto"
               }
             }
           }
@@ -547,17 +525,6 @@
   "servers": [],
   "components": {
     "schemas": {
-      "AuthTestDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ]
-      },
       "CreateMenuItemDto": {
         "type": "object",
         "properties": {
@@ -714,6 +681,59 @@
           "lastUpdated",
           "archived",
           "__v"
+        ]
+      },
+      "MenuHierarchyResponseDto": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "WORKSHOP"
+            ]
+          },
+          "structuralSubtypes": {
+            "type": "object",
+            "description": "Mapping of structural subtypes to their state groupings of menu items",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "states": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/MenuItemDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "domain",
+          "structuralSubtypes"
+        ]
+      },
+      "SortMenuItemDto": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "sortId": {
+            "type": "number"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent menu item ID for hierarchical navigation"
+          }
+        },
+        "required": [
+          "_id",
+          "sortId"
         ]
       },
       "UpdateMenuItemDto": {
