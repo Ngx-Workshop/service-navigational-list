@@ -40,7 +40,7 @@ export class MenuItemDto {
 
   @ApiProperty() sortId: number;
 
-  @ApiProperty() role: Role;
+  @ApiProperty({ enum: Role }) role: Role;
 
   @ApiProperty({ enum: DomainEnum })
   domain: DomainEnum;
@@ -103,7 +103,7 @@ export class CreateMenuItemDto {
   sortId: number;
 
   @ApiPropertyOptional({ enum: Role })
-  @IsBoolean()
+  @IsEnum(Role)
   @IsOptional()
   role?: Role;
 
@@ -194,7 +194,7 @@ export class MenuQueryDto {
   archived?: boolean;
 
   @ApiPropertyOptional({ enum: Role })
-  @IsBoolean()
+  @IsEnum(Role)
   @IsOptional()
   role?: Role;
 }
