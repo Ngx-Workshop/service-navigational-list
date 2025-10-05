@@ -105,7 +105,7 @@ export class CreateMenuItemDto {
   @ApiPropertyOptional({ enum: RoleEnum })
   @IsEnum(RoleEnum)
   @IsOptional()
-  RoleEnum?: RoleEnum;
+  role?: RoleEnum;
 
   @ApiProperty({ enum: DomainEnum })
   @IsEnum(DomainEnum)
