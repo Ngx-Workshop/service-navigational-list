@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Role } from '@tmdjr/ngx-auth-client';
 import { Model } from 'mongoose';
 import {
   CreateMenuItemDto,
@@ -17,6 +16,7 @@ import {
   DomainEnum,
   MenuItemDoc,
   MenuItemDocument,
+  RoleEnum,
   StateEnum,
   StructuralSubtypeEnum,
 } from './schemas/menu-item.schema';
@@ -52,7 +52,7 @@ export class MenuService {
     structuralSubtype?: StructuralSubtypeEnum,
     state?: StateEnum,
     archived?: boolean,
-    role?: Role
+    role?: RoleEnum
   ): Promise<MenuItemDoc[]> {
     const filter: any = {};
 

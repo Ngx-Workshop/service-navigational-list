@@ -9,7 +9,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -20,7 +19,8 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { RemoteAuthGuard, Role } from '@tmdjr/ngx-auth-client';
+import { Auth, Role, Roles } from '@tmdjr/ngx-auth-client';
+import { AuthType } from '@tmdjr/ngx-auth-client/enums/auth-type.enum';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
@@ -31,6 +31,7 @@ import {
 import { MenuService } from './menu.service';
 import {
   DomainEnum,
+  RoleEnum,
   StateEnum,
   StructuralSubtypeEnum,
 } from './schemas/menu-item.schema';
@@ -41,13 +42,14 @@ export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
   @Post()
-  @UseGuards(RemoteAuthGuard)
+  @Roles(Role.Admin)
   @ApiCreatedResponse({ type: MenuItemDto })
   create(@Body() createMenuItemDto: CreateMenuItemDto) {
     return this.menuService.create(createMenuItemDto);
   }
 
   @Get()
+  @Auth(AuthType.None)
   @ApiQuery({
     name: 'domain',
     required: false,
@@ -75,7 +77,7 @@ export class MenuController {
   @ApiQuery({
     name: 'role',
     required: false,
-    enum: Role,
+    enum: RoleEnum,
     description: 'Filter by authentication requirement',
   })
   @ApiOkResponse({ type: MenuItemDto, isArray: true })
@@ -84,7 +86,7 @@ export class MenuController {
     @Query('structuralSubtype') structuralSubtype?: StructuralSubtypeEnum,
     @Query('state') state?: StateEnum,
     @Query('archived') archived?: string,
-    @Query('role') role?: Role
+    @Query('role') role?: RoleEnum
   ) {
     const archivedFilter =
       archived === 'true' ? true : archived === 'false' ? false : undefined;
@@ -98,6 +100,7 @@ export class MenuController {
   }
 
   @Get('hierarchy/:domain')
+  @Auth(AuthType.None)
   @ApiParam({ name: 'domain', enum: DomainEnum })
   @ApiQuery({
     name: 'includeArchived',
@@ -118,6 +121,7 @@ export class MenuController {
   }
 
   @Get('domain/:domain')
+  @Auth(AuthType.None)
   @ApiParam({ name: 'domain', enum: DomainEnum })
   @ApiQuery({
     name: 'includeArchived',
@@ -135,6 +139,7 @@ export class MenuController {
   }
 
   @Get('domain/:domain/structural-subtype/:structuralSubtype')
+  @Auth(AuthType.None)
   @ApiParam({ name: 'domain', enum: DomainEnum })
   @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
   @ApiQuery({
@@ -158,6 +163,7 @@ export class MenuController {
   }
 
   @Get('domain/:domain/structural-subtype/:structuralSubtype/state/:state')
+  @Auth(AuthType.None)
   @ApiParam({ name: 'domain', enum: DomainEnum })
   @ApiParam({ name: 'structuralSubtype', enum: StructuralSubtypeEnum })
   @ApiParam({ name: 'state', enum: StateEnum })
@@ -183,21 +189,23 @@ export class MenuController {
     );
   }
 
+  @Get(':id')
+  @Auth(AuthType.None)
+  @ApiOkResponse({ type: MenuItemDto })
+  findOne(@Param('id') id: string) {
+    return this.menuService.findOne(id);
+  }
+
   @Post('sort')
-  @UseGuards(RemoteAuthGuard)
+  @Roles(Role.Admin)
   @ApiBody({ type: SortMenuItemDto })
   @ApiOkResponse({ type: MenuItemDto })
   reorderMenuItems(@Body() menuItemDto: SortMenuItemDto) {
     return this.menuService.reorderMenuItems(menuItemDto);
   }
 
-  @Get(':id')
-  @ApiOkResponse({ type: MenuItemDto })
-  findOne(@Param('id') id: string) {
-    return this.menuService.findOne(id);
-  }
-
   @Patch(':id')
+  @Roles(Role.Admin)
   @ApiOkResponse({ type: MenuItemDto })
   update(
     @Param('id') id: string,
@@ -207,7 +215,7 @@ export class MenuController {
   }
 
   @Delete(':id')
-  @UseGuards(RemoteAuthGuard)
+  @Roles(Role.Admin)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   remove(@Param('id') id: string) {
@@ -215,14 +223,14 @@ export class MenuController {
   }
 
   @Patch(':id/archive')
-  @UseGuards(RemoteAuthGuard)
+  @Roles(Role.Admin)
   @ApiOkResponse({ type: MenuItemDto })
   archive(@Param('id') id: string) {
     return this.menuService.archive(id);
   }
 
   @Patch(':id/unarchive')
-  @UseGuards(RemoteAuthGuard)
+  @Roles(Role.Admin)
   @ApiOkResponse({ type: MenuItemDto })
   unarchive(@Param('id') id: string) {
     return this.menuService.unarchive(id);

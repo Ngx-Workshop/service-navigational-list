@@ -4,7 +4,6 @@ import {
   getSchemaPath,
   PartialType,
 } from '@nestjs/swagger';
-import { Role } from '@tmdjr/ngx-auth-client';
 import {
   IsBoolean,
   IsDateString,
@@ -18,6 +17,7 @@ import {
 } from 'class-validator';
 import {
   DomainEnum,
+  RoleEnum,
   StateEnum,
   StructuralSubtypeEnum,
 } from '../schemas/menu-item.schema';
@@ -40,7 +40,7 @@ export class MenuItemDto {
 
   @ApiProperty() sortId: number;
 
-  @ApiProperty({ enum: Role }) role: Role;
+  @ApiProperty({ enum: RoleEnum }) role: RoleEnum;
 
   @ApiProperty({ enum: DomainEnum })
   domain: DomainEnum;
@@ -102,10 +102,10 @@ export class CreateMenuItemDto {
   @Min(0)
   sortId: number;
 
-  @ApiPropertyOptional({ enum: Role })
-  @IsEnum(Role)
+  @ApiPropertyOptional({ enum: RoleEnum })
+  @IsEnum(RoleEnum)
   @IsOptional()
-  role?: Role;
+  RoleEnum?: RoleEnum;
 
   @ApiProperty({ enum: DomainEnum })
   @IsEnum(DomainEnum)
@@ -193,10 +193,10 @@ export class MenuQueryDto {
   @IsOptional()
   archived?: boolean;
 
-  @ApiPropertyOptional({ enum: Role })
-  @IsEnum(Role)
+  @ApiPropertyOptional({ enum: RoleEnum })
+  @IsEnum(RoleEnum)
   @IsOptional()
-  role?: Role;
+  role?: RoleEnum;
 }
 
 export type MenuHierarchyStructuralSubtypes = {

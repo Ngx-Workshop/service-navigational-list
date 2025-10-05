@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
-import { NgxAuthClientModule, RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
+import {
+  NgxAuthClientModule,
+  RemoteAuthGuard,
+  RolesGuard,
+} from '@tmdjr/ngx-auth-client';
 import { MenuController } from './menu.controller';
 import { MenuService } from './menu.service';
 import { MenuItemDoc, MenuItemSchema } from './schemas/menu-item.schema';
@@ -45,7 +50,18 @@ const FAKE_PROVIDERS =
 @Module({
   imports: [NgxAuthClientModule, ...SCHEMA_IMPORTS],
   controllers: [MenuController],
-  providers: [MenuService, ...FAKE_PROVIDERS],
+  providers: [
+    MenuService,
+    {
+      provide: APP_GUARD,
+      useClass: RemoteAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    ...FAKE_PROVIDERS,
+  ],
   exports: [MenuService],
 })
 export class MenuModule {}
