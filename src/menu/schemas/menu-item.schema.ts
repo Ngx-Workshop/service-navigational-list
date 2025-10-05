@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Role } from '@tmdjr/ngx-auth-client';
 import { Document, Types } from 'mongoose';
 
 export enum DomainEnum {
@@ -32,7 +33,7 @@ export interface MenuItem {
   // Position of the doc item in the menu's list
   sortId: number;
   // Authentication required to view the menu
-  authRequired?: boolean;
+  role?: Role;
   // Parent menu item ID for hierarchical navigation
   parentId?: Types.ObjectId | string;
 }
@@ -59,8 +60,8 @@ export class MenuItemDoc extends Document implements MenuItem {
   @Prop({ required: true })
   sortId: number;
 
-  @Prop({ default: false })
-  authRequired?: boolean;
+  @Prop({ default: Role.Regular, enum: Role })
+  role?: Role;
 
   // Parent menu item for hierarchical navigation
   @Prop({ type: Types.ObjectId, ref: 'MenuItemDoc', required: false })

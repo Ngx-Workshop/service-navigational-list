@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Role } from '@tmdjr/ngx-auth-client';
 import { Model } from 'mongoose';
 import {
   CreateMenuItemDto,
@@ -51,7 +52,7 @@ export class MenuService {
     structuralSubtype?: StructuralSubtypeEnum,
     state?: StateEnum,
     archived?: boolean,
-    authRequired?: boolean
+    role?: Role
   ): Promise<MenuItemDoc[]> {
     const filter: any = {};
 
@@ -60,7 +61,7 @@ export class MenuService {
       filter.structuralSubtype = structuralSubtype;
     if (state !== undefined) filter.state = state;
     if (archived !== undefined) filter.archived = archived;
-    if (authRequired !== undefined) filter.authRequired = authRequired;
+    if (role !== undefined) filter.role = role;
 
     return await this.menuItemModel.find(filter).sort({ sortId: 1 }).exec();
   }

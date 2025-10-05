@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { RemoteAuthGuard } from '@tmdjr/ngx-auth-client';
+import { RemoteAuthGuard, Role } from '@tmdjr/ngx-auth-client';
 import {
   CreateMenuItemDto,
   MenuHierarchyResponseDto,
@@ -73,9 +73,9 @@ export class MenuController {
     description: 'Filter by archived status',
   })
   @ApiQuery({
-    name: 'authRequired',
+    name: 'role',
     required: false,
-    type: Boolean,
+    enum: Role,
     description: 'Filter by authentication requirement',
   })
   @ApiOkResponse({ type: MenuItemDto, isArray: true })
@@ -84,23 +84,16 @@ export class MenuController {
     @Query('structuralSubtype') structuralSubtype?: StructuralSubtypeEnum,
     @Query('state') state?: StateEnum,
     @Query('archived') archived?: string,
-    @Query('authRequired') authRequired?: string
+    @Query('role') role?: Role
   ) {
     const archivedFilter =
       archived === 'true' ? true : archived === 'false' ? false : undefined;
-    const authRequiredFilter =
-      authRequired === 'true'
-        ? true
-        : authRequired === 'false'
-          ? false
-          : undefined;
-
     return this.menuService.findAll(
       domain,
       structuralSubtype,
       state,
       archivedFilter,
-      authRequiredFilter
+      role
     );
   }
 

@@ -85,12 +85,17 @@
             }
           },
           {
-            "name": "authRequired",
+            "name": "role",
             "required": false,
             "in": "query",
             "description": "Filter by authentication requirement",
             "schema": {
-              "type": "boolean"
+              "enum": [
+                "regular",
+                "publisher",
+                "admin"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -546,8 +551,13 @@
           "sortId": {
             "type": "number"
           },
-          "authRequired": {
-            "type": "boolean"
+          "role": {
+            "type": "string",
+            "enum": [
+              "regular",
+              "publisher",
+              "admin"
+            ]
           },
           "domain": {
             "type": "string",
@@ -620,8 +630,8 @@
           "sortId": {
             "type": "number"
           },
-          "authRequired": {
-            "type": "boolean"
+          "role": {
+            "type": "string"
           },
           "domain": {
             "type": "string",
@@ -672,7 +682,7 @@
           "menuItemText",
           "routePath",
           "sortId",
-          "authRequired",
+          "role",
           "domain",
           "structuralSubtype",
           "state",
@@ -757,8 +767,13 @@
           "sortId": {
             "type": "number"
           },
-          "authRequired": {
-            "type": "boolean"
+          "role": {
+            "type": "string",
+            "enum": [
+              "regular",
+              "publisher",
+              "admin"
+            ]
           },
           "domain": {
             "type": "string",
