@@ -193,6 +193,7 @@ export class MenuController {
   @Auth(AuthType.None)
   @ApiOkResponse({ type: MenuItemDto })
   findOne(@Param('id') id: string) {
+    console.log('Testing git actions');
     return this.menuService.findOne(id);
   }
 
