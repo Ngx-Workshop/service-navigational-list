@@ -35,7 +35,7 @@ import {
   StateEnum,
   StructuralSubtypeEnum,
 } from './schemas/menu-item.schema';
-
+console.log('MenuController loaded');
 @ApiTags('Menu')
 @Controller('navigational-list')
 export class MenuController {
