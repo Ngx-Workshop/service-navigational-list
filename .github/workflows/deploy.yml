@@ -223,7 +223,7 @@ jobs:
               --name service-navigational-list \
               --env-file .env \
               --network ngx-net \
-              --restart unless-stopped \
+              --restart unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
               -p 3006:3006 \
               service-navigational-list
 
