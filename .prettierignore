@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+contracts/
+openapi.json
+package-lock.json
+*.tsbuildinfo
+.specify/
+specs/
+docs/
+.github/prompts/

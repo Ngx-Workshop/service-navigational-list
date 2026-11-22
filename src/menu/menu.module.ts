@@ -9,6 +9,7 @@ import {
 } from '@tmdjr/ngx-auth-client';
 import { MenuController } from './menu.controller';
 import { MenuService } from './menu.service';
+import { MenuOrderingService } from './menu-ordering.service';
 import { MenuItemDoc, MenuItemSchema } from './schemas/menu-item.schema';
 
 const SCHEMA_IMPORTS =
@@ -53,6 +54,7 @@ const FAKE_PROVIDERS =
   controllers: [MenuController],
   providers: [
     MenuService,
+    MenuOrderingService,
     {
       provide: APP_GUARD,
       useClass: AuthenticationGuard,
@@ -63,6 +65,5 @@ const FAKE_PROVIDERS =
     },
     ...FAKE_PROVIDERS,
   ],
-  exports: [MenuService],
 })
 export class MenuModule {}

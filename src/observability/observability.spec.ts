@@ -5,18 +5,31 @@ import {
   RolesGuard,
 } from '@tmdjr/ngx-auth-client';
 import type { Server } from 'node:http';
-import { Controller, Get, INestApplication, Logger } from '@nestjs/common';
+import { Controller, Get, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- Match callable Supertest in CommonJS service builds.
 import request = require('supertest');
 import { ObservabilityModule } from './observability.module';
-import { createServiceLogger, httpLoggingMiddleware } from './observability';
+import {
+  createServiceLogger,
+  httpLoggingMiddleware,
+  observeOperation,
+} from './observability';
+
+const domainLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 @Controller('items')
 class TestController {
   @Get(':id')
   get() {
-    return { ok: true };
+    return observeOperation(
+      domainLogger,
+      'menu.update',
+      () =>
+        new Promise<{ ok: boolean }>((resolve) =>
+          setTimeout(() => resolve({ ok: true }), 5)
+        )
+    );
   }
 }
 
@@ -32,7 +45,7 @@ describe('Service observability', () => {
       controllers: [TestController],
     }).compile();
     app = module.createNestApplication({ logger: false });
-    app.use(httpLoggingMiddleware({ log, warn, error } as unknown as Logger));
+    app.use(httpLoggingMiddleware({ log, warn, error }));
     await app.init();
   });
   afterAll(async () => {
@@ -54,6 +67,10 @@ describe('Service observability', () => {
       details: { heartbeat: { status: 'up' } },
     });
     expect(log).not.toHaveBeenCalled();
+    expect(domainLogger.log).not.toHaveBeenCalled();
+    await request(app.getHttpServer()).head('/health').expect(200);
+    expect(log).not.toHaveBeenCalled();
+    expect(domainLogger.log).not.toHaveBeenCalled();
   });
 
   it('logs route templates and timings without request data or concrete identifiers', async () => {
@@ -86,6 +103,35 @@ describe('Service observability', () => {
     expect(JSON.stringify(warn.mock.calls)).not.toContain('private-');
   });
 
+  it('isolates concurrent async operations and ignores incoming correlation content', async () => {
+    const responses = await Promise.all([
+      request(app.getHttpServer())
+        .get('/items/first')
+        .set('X-Request-ID', 'private-secret'),
+      request(app.getHttpServer())
+        .get('/items/second')
+        .set('X-Request-ID', 'a'.repeat(200)),
+    ]);
+    const ids = responses.map((response) => response.headers['x-request-id']);
+    expect(new Set(ids).size).toBe(2);
+    for (const requestId of ids) {
+      expect(domainLogger.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'menu.update',
+          outcome: 'success',
+          requestId,
+          operationId: expect.stringMatching(/^[0-9a-f-]{36}$/) as unknown,
+          durationMs: expect.any(Number) as unknown,
+        })
+      );
+      expect(log).toHaveBeenCalledWith(expect.objectContaining({ requestId }));
+    }
+    expect(domainLogger.log).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(domainLogger.log.mock.calls)).not.toContain(
+      'private-secret'
+    );
+  });
+
   it('does not provide a write endpoint for heartbeat', async () => {
     await request(app.getHttpServer())
       .post('/health')
@@ -93,6 +139,70 @@ describe('Service observability', () => {
       .expect(404);
     expect(warn).toHaveBeenCalled();
     expect(JSON.stringify(warn.mock.calls)).not.toContain('private-body');
+  });
+
+  describe('Native domain operation events', () => {
+    it('emits safe contextual JSON for success and failure, preserving results/errors', async () => {
+      const stdout = jest
+        .spyOn(process.stdout, 'write')
+        .mockImplementation(() => true);
+      const stderr = jest
+        .spyOn(process.stderr, 'write')
+        .mockImplementation(() => true);
+      const logger = createServiceLogger();
+      const failure = new Error('private-token-cookie-body-content');
+      try {
+        const result = { body: 'private-content' };
+        expect(
+          await observeOperation(
+            {
+              log: (entry: object) => logger.log(entry, 'MenuService'),
+              warn: (entry: object) => logger.warn(entry, 'MenuService'),
+              error: (entry: object) => logger.error(entry, 'MenuService'),
+            },
+            'menu.create',
+            () => Promise.resolve(result)
+          )
+        ).toBe(result);
+        await expect(
+          observeOperation(logger, 'menu.reorder', () =>
+            Promise.reject(failure)
+          )
+        ).rejects.toBe(failure);
+        const lines = [...stdout.mock.calls, ...stderr.mock.calls].map(
+          ([line]) => String(line)
+        );
+        const entries: unknown[] = lines.map(
+          (line) => JSON.parse(line) as unknown
+        );
+        expect(entries).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              level: 'log',
+              context: 'MenuService',
+              message: expect.objectContaining({
+                event: 'menu.create',
+                outcome: 'success',
+                operationId: expect.any(String) as unknown,
+              }) as unknown,
+            }),
+            expect.objectContaining({
+              level: 'error',
+              message: expect.objectContaining({
+                event: 'menu.reorder',
+                outcome: 'failure',
+                statusCode: 500,
+              }) as unknown,
+            }),
+          ])
+        );
+        expect(lines.join('')).not.toContain('private-');
+        expect(lines.join('')).not.toContain('requestId');
+      } finally {
+        stdout.mockRestore();
+        stderr.mockRestore();
+      }
+    });
   });
 
   it('uses native Nest JSON logging with a contextual, structured message', () => {
