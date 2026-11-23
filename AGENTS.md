@@ -31,3 +31,5 @@ with Husky/lint-staged, CI checks and safe domain logging through existing
 observability. No new feature is selected automatically. Baseline lint failures
 block the new CI release gate; follow handoff actions when authorized. Container
 and live Grafana checks are pending external-owner verification.
+
+Current deployment policy: [deployment-workflows](docs/deployment-workflows.md). Automatic main delivery verifies/deploys; npm publication is manual only. This supersedes older automatic-publishing instructions.

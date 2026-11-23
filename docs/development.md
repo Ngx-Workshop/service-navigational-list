@@ -73,3 +73,5 @@ runtime claim: auth-client remains a pre-existing runtime import declared as a
 devDependency. The current Dockerfile installs devDependencies. Live Mongo,
 auth and Grafana checks remain external-owner work. Do not use production writes
 as tests. See [handoff](../specs/001-code-maintenance/handoff.md) for next actions.
+
+Deployment and npm publication now follow [deployment-workflows](deployment-workflows.md).

@@ -46,3 +46,5 @@ for priorities, characterization, checks and residual baseline failures. Remote
 authentication remains owned by the installed auth-client; no foreign collection
 access or speculative adapter was introduced. This maintenance is not a security
 audit or evidence of live Mongo/auth/Grafana integration.
+
+Generated deployment orchestration is centrally managed by the Node CLI; see [deployment-workflows](deployment-workflows.md).
